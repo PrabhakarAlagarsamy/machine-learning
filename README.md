@@ -1,6 +1,8 @@
 # machine-learning
-### This contains my macine learning related work
+### This contains my machine learning related work
 
 
-- Python
+- Data
 - EDA Project
+- ML1 Project
+- Python
