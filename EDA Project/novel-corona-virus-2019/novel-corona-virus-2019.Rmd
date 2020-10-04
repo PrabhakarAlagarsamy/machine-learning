@@ -1,0 +1,279 @@
+---
+title: "novel-corona-virus-2019"
+output: 
+  html_notebook: 
+    toc: yes
+    toc_depth: 5
+---
+
+# 1. Problem Statement
+
+## 1.1 Background Information
+
+The COVID-19 outbreak was first identified in December 2019 in Wuhan, China. The WHO declared the outbreak a Public Health Emergency of International Concern on 30 January 2020 and a pandemic on 11 March (Wikipedia). 
+
+## 1.2 Challenges at hand
+
+After taking test samples it takes 2 days to declare the result that the person got infected or not. In the mean time he may spread the disease knowingly or unknowingly.
+
+## 1.3 Current Scenario
+
+India at the 2nd place after USA. In India now only social spread is happening and it is going to peak level. In other part of world except USA it is gone down. 
+
+## 1.4 Plan of Action
+
+Organizations worldwide have been collecting data so that the government can monitor and learn from this pandemic.
+
+## 1.5 End Result 
+
+The data set gives list of confirmed covid-19 cases. From this we do some statistical analysis and arrive to useful information. 
+
+___
+
+# 2. Study Requirements
+
+* **Create a clear bar chart that displays the latest number of COVID-19 cases of the top 10 countries.** 
+
+* **Visualize the confirmed cases worldwide from January to March.**
+
+* **Visualize the confirmed cases of COVID-19 in China and the rest of the world from January to March.**
+
+___
+
+# 3. Analysis Process 
+
+1. We are going to analyze based on Country. 
+
+2. We are going to analyze based on Date.
+
+3. We will take that data and then come up with a **Covid Analysis**.
+
+4. Finally, we will come up with a **Result**. 
+
+___
+
+# 4. Loading Packages and Libraries
+
+Alright! lets begin our covid analysis by installing some packages and loading all the libraries. 
+
+
+```{r}
+# Load libraries
+
+library(dplyr)
+library(psych)
+library(DataExplorer)
+library(ggplot2)
+```
+___
+
+# 5. Covid Analysis Process
+
+**Covid Analysis** is the process of analyzing confirmed cases based on country and time. Understanding covid analysis allows Governments to be more efficient in controlling the spread. 
+
+## 5.1 Importing Data
+
+Lets import our data first.
+
+```{r}
+dataset = read.csv("E:/Document/Freelancer/time_series_covid_19_confirmed.csv", header = TRUE)
+```
+
+## 5.2 Reading Data
+
+Lets have a complete view of our data.
+
+```{r}
+View(dataset)
+```
+
+___
+
+Lets have a look at the head of the data.
+
+```{r}
+head(dataset)
+```
+
+___
+
+**glimpse** gives you a better organized structure of the data.
+
+```{r}
+glimpse(dataset)
+```
+___
+
+Using the **describe()** function, we can compute descriptive statistics for numerical data. The descriptive statistics help determine the distribution of numerical variables.
+
+```{r}
+describe(dataset)
+```
+___
+
+## 5.3 Cleaning the Data
+
+Now, lets do some data cleaning. For that, first we need to figure out the number of **missing values** in each column.
+
+```{r}
+numColumns = dim(dataset)[2]
+vector_NAs = rep(0, numColumns)               
+for (i in 1:numColumns) {
+  vector_NAs[i] = sum(is.na(dataset[,i]))
+}
+print("The missing values in each column:")
+print(vector_NAs)
+```
+It appears that column **66** has maximum number of missing values which accumulates approximately 40 percent of the data points.
+
+___
+
+**192** missing values are really high in number. Therefore, it is essential to delete this column as it doesn't contribute much to our analysis.
+
+```{r}
+dataset = dataset[,-c(66)]
+print(dim(dataset))
+```
+## 5.4 Add a Column
+
+All state wise values for each day are added together and created as a new column **StateTotal** 
+
+
+```{r}
+dataset_numeric = dataset[,-c(1,2,3,4)]
+View(dataset_numeric)
+stateTotal = rowSums(dataset_numeric)
+dataset$StateTotal = stateTotal
+View(dataset)
+```
+
+## 5.5 Analyze Data
+
+Lets use the **barplot** function to do **bivariate analysis** of some variables.
+
+### 5.5.1 Which state is highly affected?
+
+Lets begin with a variable **State**.
+
+```{r}
+dataset %>% top_n(15, StateTotal) %>% 
+  ggplot(aes(reorder(Province.State,-StateTotal), StateTotal))+
+  geom_col() +
+  labs(x="Province.State", title="Top 10 States affected by covid-19")
+```
+
+Between the months of January to March, **Hubei** is highly affected state with more than 2 million people.
+
+### 5.5.2 Which country is highly affected?
+
+
+```{r}
+dataset %>% group_by(Country.Region) %>% summarise(country_total = sum(StateTotal)) %>% top_n(10, country_total) %>% 
+  ggplot(aes(reorder(Country.Region, -country_total), country_total))+
+  geom_col() +
+  labs(x="Country.Region", title="Top 10 Countries affected by covid-19")
+```
+
+Between the months of January to March, **China** is highly affected country with near to 3.5 million people.
+At the same time, **Italy** is affected near to 0.5 million people followed by **Iran** with 0.25 million people.
+
+### 5.5.3 World wide confirmed cases?
+
+```{r}
+cName = colnames(dataset_numeric)
+dTotal = colSums(dataset_numeric)
+plot(dTotal,type = "o", col = "red", xlab = "Days", ylab = "Confirmed Cases",
+   main = "Confirmed Cases World Wide")
+```
+The above line chart shows that confirmed cases increased world wide between 22nd January 2020 to 22nd March 2020.
+
+In first 20 days, the maximum of confirmed cases world wide on a single day around **40,000**
+
+In next 30 days, the maximum of confirmed cases world wide on a single day reaches to **1,20,000**
+
+In next 10 days, the maximum of confirmed cases world wide on a single day reaches to **3,20,000**
+
+### 5.5.4 Confirmed cases between China and World?
+
+```{r}
+vector_NAs_china = rep(0, 65) 
+vector_NAs_world = rep(0, 65)
+nRows = dim(dataset)[1]
+sum_china=0
+sum_world=0
+for (i in 5:65) {
+  for (j in 1:nRows) {
+    if (dataset[j,2]=='China')
+      sum_china = sum_china + dataset[j,i]
+    else
+      sum_world = sum_world + dataset[j,i]
+  }
+  vector_NAs_china[i] = sum_china
+  vector_NAs_world[i] = sum_world
+  sum_china=0
+  sum_world=0
+}
+```
+
+
+```{r}
+plot(vector_NAs_china,type = "o",col = "red", xlab = "Days", ylab = "Confirmed Cases", main = "China Vs World")
+
+lines(vector_NAs_world, type = "o", col = "blue")
+```
+
+The above line chart shows the comparison of confirmed cases increment between China and world in the time period 22nd January 2020 to 22nd March 2020.
+
+The Red line shows **China**
+
+The Blue line shows **World**
+
+In first 10 days, there is no much difference between china and rest of the world.
+
+In next 30 days, china reached its peak and become stable of confirmed cases, whereas this time only confirmed cases started growing in rest of the world.
+
+In next 20 days, the confirmed cases increases 1000 multiples world wide except china. In china, the cases are not increasing and it became stable.
+
+After 50th day, the confirmed cases increases vertically in the graph, At the same time **WHO** announces **pandemic** on 11th March.
+
+
+### 5.5.5 Confirmed cases in India?
+
+```{r}
+vector_NAs_india = rep(0, 65) 
+sum_india=0
+for (i in 5:65) {
+  for (j in 1:nRows) {
+    if (dataset[j,2]=='India')
+      sum_india = sum_india + dataset[j,i]
+  }
+  vector_NAs_india[i] = sum_india
+  sum_india=0
+}
+```
+
+```{r}
+plot(vector_NAs_india,type = "o",col = "red", xlab = "Days", ylab = "Confirmed Cases", main = "Confirmed Cases in India")
+```
+
+The above chart shows increment of confirmed cases in **India**, When world wide cases increases in 1000 multiples here the cases increases in 10 multiples only.
+
+Till **55th day** the increment of confirmed cases less than **100** only.
+
+In India, the increment is started slowly, but now we are at the 2nd place after USA.
+
+____
+
+# 6. Conclusion
+
+So, at last we are coming to the conclusion based on our analysis that 
+
+Initially **China** got affected much and it started spreading world wide.
+
+When **USA**, **European** countries got affected 1000 multiples, **India** was affected in 10 multiples only. This time **China** became stable.
+
+Now in **India** the cases are increasing 1000 multiples.
+
+People need to be more **social conscious** in order to avoid increase.
+
+Till to find **vaccine** the confirmed cases can't be zero.
