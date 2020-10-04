@@ -2,4 +2,4 @@
 ### This directory contains machine learning intermediate related projects
 
 
-- SMSSpam
+- SMS Spam
