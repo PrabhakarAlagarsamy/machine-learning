@@ -1,0 +1,385 @@
+---
+title: "1000 Movies Data (EDA)"
+output: 
+  html_notebook: 
+    toc: yes
+    toc_depth: 5
+---
+
+# 1. Problem Statement
+
+## 1.1 Background Information
+
+IMDB originated with a Usenet posting entitled "Those Eyes", by the British film fan and computer programmer Needham, about actresses with beautiful eyes.
+
+By late 1990, the lists included almost 10,000 movies and television series correlated with actors and actresses appearing therein and thus the database that would become the IMDB was born.
+
+## 1.2 Challenges at hand 
+
+IMDB is accessible to all internet users, but a registration process is necessary to contribute information to the site.
+
+Most data in the database is provided by volunteer contributors. The site enables registered users to submit new material and edits to existing entries. 
+
+## 1.3 Current Scenario
+
+IMDB is an online database owned by Amazon of information related to films, television programs, home videos, video games, and streaming content online – including cast, production crew and personal biographies, plot summaries, trivia, ratings, and fan and critical reviews. 
+
+## 1.4 Plan of Action
+
+IMDB offers a rating scale that allows users to rate films on a scale of one to ten. IMDB indicates that submitted ratings are filtered and weighted in various ways in order to produce a weighted mean that is displayed for each film, series, and so on.
+
+## 1.5 End Result 
+
+The data set gives list about 1,000 most popular movies on IMDB in the last 10 years. 
+
+___
+
+# 2. Study Questions
+
+* **What are the factors that will make the critic score high?** 
+
+* **Which genre of the movie generates highest collection?**
+
+* **What makes the user to give highest rating for the movie?**
+
+___
+
+# 3. Analysis Process 
+
+1. We are going to analyze based on Genre. 
+
+2. We are going to analyze based on Ratings.
+
+3. We will take that data and then come up with a **Movie Analysis**.
+
+4. Finally, we will come up with a **Result**. 
+
+___
+
+# 4. Loading Packages and Libraries
+
+Alright! lets begin our movie analytics by installing some packages and loading all the libraries. 
+
+```{r}
+# Load libraries
+
+library(dplyr)
+library(psych)
+library(vtree)
+library(DataExplorer)
+```
+
+___
+
+# 5. Movie Analytics Process
+
+**Movie analytics** is the process of measuring, managing and analyzing movie performance by its critic score and ratings. Understanding movie analytics allows users to be more efficient at their ratings. 
+
+## 5.1 Importing Data
+
+Lets import our data first.
+
+```{r}
+dataset = read.csv("https://raw.githubusercontent.com/insaid2018/R/master/Projects/1000 movies data.csv", header = TRUE)
+```
+
+## 5.2 Reading Data
+
+Lets have a complete view of our dataset.
+
+```{r}
+View(dataset)
+```
+
+___
+
+Lets have a look at the head of the data.
+
+```{r}
+head(dataset)
+```
+
+___
+
+To know how the structure of the data is, we will use **str** function. 
+
+```{r}
+str(dataset)
+```
+
+___
+
+**glimpse** gives you a better organized structure of the data.  
+
+```{r}
+glimpse(dataset)
+```
+
+___
+
+Using the **describe()** function, we can compute descriptive statistics for numerical data. The descriptive statistics help determine the distribution of numerical variables.
+
+```{r}
+describe(dataset)
+```
+
+___
+
+## 5.3 Data Profiling
+
+Lets create a data profiling report for our dataset using the **create_report** function in **DataExplorer** package.
+
+```{r}
+create_report(dataset)
+```
+
+___
+
+## 5.4 Cleaning the Data
+
+Now, lets do some data cleaning. For that, first we need to figure out the number of **missing values** in each column.
+
+```{r}
+numColumns = dim(dataset)[2]
+vector_NAs = rep(0, numColumns)               
+for (i in 1:numColumns) {
+  vector_NAs[i] = sum(is.na(dataset[,i]))
+}
+print("The missing values in each column:")
+print(vector_NAs)
+```
+It appears that columns **11** and **12** has maximum number of missing values which accumulates approximately 10 percent of the data points.
+
+It is essential to keep these columns as they contribute much to our analysis.
+___
+
+It is better to remove all the rows containing missing values.
+
+```{r}
+row.has.na <- apply(dataset, 1, function(x){any(is.na(x))})
+dataset = dataset[!row.has.na,]
+print(dim(dataset))
+```
+___
+
+Again create a data profiling report for our dataset.
+
+```{r}
+create_report(dataset)
+```
+___
+
+Again have a complete view of our dataset.
+
+```{r}
+View(dataset)
+```
+
+___
+
+## 5.5 Analyze Data
+
+Lets use the **plot** function to do **univariate analysis** of some variables.
+
+### 5.5.1 Which variable turns out to be significant for the analysis?
+
+Lets begin with a variable **Rating**.
+
+```{r}
+plot(dataset$Rating)
+```
+
+Almost most of the movies **Rating** falls between 6 to 8.
+
+```{r}
+plot(dataset$Metascore)
+```
+
+We have movies from different **Metascore** and the sample distribution seems to be evenly spread. Mostly **Metascore** falls between 40 to 80.
+___
+
+
+Lets see if there is any relationship between rating and critic sore.
+
+```{r}
+plot(dataset$Rating, dataset$Metascore)
+```
+
+This plot shows positive correlation between rating and critic score. Whenever the rating is high there are more positive reviews.
+
+___
+
+To have a better picture, lets see what are the **movies** having high revenue in colorful visualization.
+
+```{r}
+library(ggplot2)
+ggplot(dataset, aes(x=Metascore, y=Revenue..Millions., color=Rating)) +
+geom_point() + geom_smooth(method="lm")
+```
+
+Usually movies with high **rating** and good **critic score** will generate good **revenue**.
+
+___
+
+### 5.5.2 How the distribution of data is?
+
+Lets see how the data is distributed using the **boxplots**, **histograms**, and **density plots**.
+
+```{r}
+dataset_numeric = dataset[,-c(2, 3, 4, 5, 6)]
+```
+
+The qualitative data columns are removed and assigned to dataset_numeric.
+
+___
+
+#### 5.5.2.1 Boxplots
+
+
+```{r}
+#Box And Whisker Plots
+
+par(mfrow = c(2,3))     # Put three figures in a row
+
+for(i in 2:7) {
+  boxplot(dataset_numeric[,i], main=names(dataset_numeric)[i])
+}
+```
+
+Maximum number of **movies** released between **2010 to 2015**.
+
+Maximum number of **movies** run time between **100 to 120 minutes**.
+
+Most of the **movies** rating between **6.5 to 7.5**.
+
+Almost all the **movies** having collection in the range **10 to 120 million**.
+
+___
+
+#### 5.5.2.2 Histograms
+
+```{r}
+#Histograms
+
+par(mfrow = c(2,3))  # Put three figures in a row
+
+for (i in 2:7) {
+  hist(dataset_numeric[,i],main=names(dataset_numeric)[i])
+}
+```
+
+___
+
+#### 5.5.2.3 Density Plots
+
+```{r}
+#Density Plots
+
+par(mfrow=c(2,3))           # Put three figures in a row
+
+for(i in 2:7) {
+  plot(density(dataset_numeric[,i]), main=names(dataset_numeric)[i])
+}
+```
+
+___
+
+### 5.5.3 Which year does movies fall into?
+
+Lets bin our movies into different **year**.
+
+```{r}
+p = ggplot(dataset, aes(x = Year, y = Revenue..Millions., color = Rating))
+p+geom_jitter() + geom_boxplot()
+```
+**Revenue** and **Rating** are evenly distributed along different year segment.
+___
+
+
+```{r}
+p = ggplot(dataset, aes(x = Rating, y = Revenue..Millions., color = Metascore))
+p+geom_point() + stat_smooth()
+```
+
+___
+
+Lets see how **Rating** and **Revenue** vary with **votes** variable.
+
+```{r}
+ggplot(dataset, aes(x = Rating, y = Revenue..Millions., color=Votes)) +
+geom_point() + geom_smooth(method="lm")
+
+```
+
+We can see some trend for **Revenue** to increase with **Rating**, and we tend to see more than **10 lakhs** votes movies at higher levels of revenue.
+___
+
+Let's try to show this trend with Run time (Minutes).
+
+```{r}
+ggplot(dataset, aes(x = Rating, y = Revenue..Millions., size=Runtime..Minutes., color=Votes)) +
+geom_point()
+```
+It is quite evident that **Rating** of movies have elevated levels of **Revenue** with **120 minutes** of run time.
+
+___
+
+### 5.5.4 Which genre should we focus on?
+
+Here, lets see which genre of movie is coming more.
+
+```{r}
+ggplot(dataset, aes(x = Genre)) + geom_bar(width=1) + theme(axis.text.x =  element_text(size=1, angle = 90, hjust = 1 ,vjust = 1))
+```
+
+___
+
+We are going to run this again.
+
+```{r}
+vtree(dataset, "Rating", horiz=TRUE, height=2000, width=400)
+```
+There are **10%** of movies having more than **7.9** rating.
+
+___
+
+
+```{r}
+vtree(dataset, "Rating Genre", horiz=TRUE, height=20000, width=400)
+```
+Almost all kind of movies like **action, drama, comedy, romance, adventure, thriller, music** are getting rating above **7.9**. This shows that movie making is good in that genre and also it liked by people.
+
+___
+
+
+```{r}
+vtree(dataset, "Rating Metascore", horiz=TRUE, height=20000, width=400)
+```
+More than **70%** positive reviews got for the movies having rating above **7.9**.
+
+___
+
+
+```{r}
+vtree(dataset, "Rating Revenue..Millions.", horiz=TRUE, height=24000, width=400)
+```
+On an average revenue generated by movies approx **$100 million** for movies having rating above **7.9**. There are some exceptions movie may collect less also depends upon commercial value in that movie.
+
+___
+
+## 5.6 Correlation Analysis
+
+Lets see how the variables are correlated in our dataset. 
+
+```{r}
+library(dlookr)
+plot_correlate(dataset)
+```
+The plot shows **Rating, Metascore, Votes** are positively correlated. To some extent **Revenue** also correlated with **Rating**. Whenever **votes** is high **revenue** also high.
+
+___
+
+
+# 6. Conclusion
+
+So, at last we are coming to the conclusion based on our analysis that all genre of movies watched by people but only making of the movie gives difference. When movie is made good, up to the mark, people give **positive reviews** that brings **rating** high. Lot of people give **votes** for the movie if they liked it. So, ultimately it generates good **revenue**.
