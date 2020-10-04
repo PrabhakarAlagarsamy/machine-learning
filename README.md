@@ -1,5 +1,5 @@
 # machine-learning
-### This contains my machine learning related work
+### This directory contains my machine learning related work
 
 
 - Data
