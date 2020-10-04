@@ -5,4 +5,7 @@
 - Data
 - EDA Project
 - ML1 Project
+- ML2 Project
+- ML3 Project
 - Python
+- Tableau
